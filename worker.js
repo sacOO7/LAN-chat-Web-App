@@ -1,52 +1,60 @@
+var SCWorker = require('socketcluster/scworker');
 var fs = require('fs');
 var express = require('express');
 var serveStatic = require('serve-static');
 var path = require('path');
 
-module.exports.run = function (worker) {
-  console.log('   >> Worker PID:', process.pid);
+class Worker extends SCWorker {
+  run() {
+    var worker = this;
 
-  var app = require('express')();
+    console.log('   >> Worker PID:', process.pid);
 
-  var httpServer = worker.httpServer;
-  var scServer = worker.scServer;
+    var app = require('express')();
 
-  app.use(serveStatic(path.resolve(__dirname, 'public')));
+    var httpServer = worker.httpServer;
+    var scServer = worker.scServer;
 
-  httpServer.on('request', app);
+    app.use(serveStatic(path.resolve(__dirname, 'public')));
 
-  var count = 0;
+    httpServer.on('request', app);
 
-  /*
-    In here we handle our incoming realtime connections and listen for events.
-  */
-  scServer.on('connection', function (socket) {
+    var count = 0;
 
-    // Some sample logic to show how to handle client events,
-    // replace this with your own logic
+    /*
+      In here we handle our incoming realtime connections and listen for events.
+    */
+    scServer.on('connection', function (socket) {
 
-      console.log("User Connected ");
+      // Some sample logic to show how to handle client events,
+      // replace this with your own logic
 
-    socket.on('sampleClientEvent', function (data) {
-      count++;
-      console.log('Handled sampleClientEvent', data);
-      scServer.exchange.publish('sample', count);
-    });
+        console.log("User Connected ");
 
-    var interval = setInterval(function () {
-      socket.emit('rand', {
-        rand: Math.floor(Math.random() * 5)
+      socket.on('sampleClientEvent', function (data) {
+        count++;
+        console.log('Handled sampleClientEvent', data);
+        scServer.exchange.publish('sample', count);
       });
-    }, 1000);
 
-  socket.on('chat', function (data) {
-          console.log('Chat:', data);
-      scServer.global.publish('yell', data);
-  });
+      var interval = setInterval(function () {
+        socket.emit('rand', {
+          rand: Math.floor(Math.random() * 5)
+        });
+      }, 1000);
 
-    socket.on('disconnect', function () {
-        console.log("User Disconnected");
-      clearInterval(interval);
+    socket.on('chat', function (data) {
+            console.log('Chat:', data);
+        scServer.global.publish('yell', data);
     });
-  });
-};
+
+      socket.on('disconnect', function () {
+          console.log("User Disconnected");
+        clearInterval(interval);
+      });
+    });
+  }
+}
+
+new Worker();
+

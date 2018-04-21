@@ -45,7 +45,7 @@ class Worker extends SCWorker {
 
     socket.on('chat', function (data) {
             console.log('Chat:', data);
-        scServer.global.publish('yell', data);
+        scServer.exchange.publish('yell', data);
     });
 
       socket.on('disconnect', function () {
@@ -57,4 +57,3 @@ class Worker extends SCWorker {
 }
 
 new Worker();
-

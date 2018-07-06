@@ -5,13 +5,22 @@ var assert = require('assert');
 var http = require('http');
 var util = require('util');
 var fs = require('fs');
-var getTestSocketPath = require('./testsocketpath').getTestSocketPath;
+var getTestSocketPath = require('./test-socket-path').getTestSocketPath;
 
 var scServer = childProcess.fork(__dirname + '/server.js');
 var resultSocketPath = getTestSocketPath();
 
+var fileExistsSync = function (filePath) {
+  try {
+    fs.accessSync(filePath, fs.constants.F_OK);
+  } catch (err) {
+    return false;
+  }
+  return true;
+};
+
 if (process.platform != 'win32') {
-  if (fs.existsSync(resultSocketPath)) {
+  if (fileExistsSync(resultSocketPath)) {
     fs.unlinkSync(resultSocketPath);
   }
 }
@@ -51,7 +60,6 @@ var endTest = function (callback) {
 };
 
 var options = {
-  protocol: 'http',
   hostname: '127.0.0.1',
   port: 8000,
   autoReconnect: true,
